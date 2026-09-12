@@ -1,0 +1,6 @@
+{
+  "name": "現代化報價單管理系統",
+  "description": "現代化響應式報價單管理系統，支援客戶、廠商、產品及報價單多模組管理與標準 A4 列印匯出。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,2440 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>現代化報價單管理系統 - Quotation Management System</title>
+  <meta name="description" content="現代化響應式報價單管理系統，支援客戶、廠商、產品及報價單多模組管理與標準 A4 列印匯出。" />
+  <meta property="og:title" content="現代化報價單管理系統" />
+  <meta property="og:description" content="現代化響應式報價單管理系統，支援客戶、廠商、產品及報價單多模組管理與標準 A4 列印匯出。" />
+
+  <!-- Bootstrap 5.3.3 CSS & Bootstrap Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --brand-primary: #1e3a8a;
+      --brand-secondary: #0284c7;
+      --brand-dark: #0f172a;
+      --brand-bg: #f8fafc;
+      --card-border: #e2e8f0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--brand-bg);
+      color: #334155;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-pills .nav-link {
+      color: #475569;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .nav-pills .nav-link:hover {
+      color: var(--brand-primary);
+      background-color: #f1f5f9;
+    }
+
+    .nav-pills .nav-link.active {
+      background-color: var(--brand-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.25);
+    }
+
+    .app-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.35em 0.65em;
+      border-radius: 9999px;
+    }
+
+    .table thead th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      vertical-align: middle;
+      font-size: 0.925rem;
+    }
+
+    .text-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875rem;
+    }
+
+    /* Print Preview Styles */
+    .a4-preview-container {
+      background: #525659;
+      padding: 1.5rem 0.5rem;
+      min-height: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .a4-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 210mm;
+      min-height: 297mm;
+      padding: 18mm 16mm;
+      margin: 0 auto;
+      box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.3);
+      box-sizing: border-box;
+      color: #0f172a;
+      position: relative;
+    }
+
+    .print-logo-box {
+      width: 50px;
+      height: 50px;
+      background: var(--brand-primary);
+      color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .a4-preview-container {
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .a4-sheet {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 12mm 10mm !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm no-print" style="background-color: var(--brand-dark) !important;">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#quotations" onclick="app.navigate('quotations')">
+        <span class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded p-1" style="width: 32px; height: 32px;">
+          <i class="bi bi-receipt-cutoff"></i>
+        </span>
+        <span>報價單管理系統</span>
+        <span class="badge text-bg-secondary ms-1 fs-6 d-none d-sm-inline-block" style="font-size: 0.65rem !important;">PRO v2.5</span>
+      </a>
+
+      <!-- Mobile Hamburger Toggler -->
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="切換導覽列">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Navbar Links & Global Actions -->
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 nav-pills mt-2 mt-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active text-white" id="nav-quotations" href="#quotations" onclick="app.navigate('quotations')">
+              <i class="bi bi-file-earmark-text-fill me-1"></i> 報價單管理
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white-50" id="nav-clients" href="#clients" onclick="app.navigate('clients')">
+              <i class="bi bi-people-fill me-1"></i> 客戶管理
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white-50" id="nav-vendors" href="#vendors" onclick="app.navigate('vendors')">
+              <i class="bi bi-buildings-fill me-1"></i> 廠商管理
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white-50" id="nav-products" href="#products" onclick="app.navigate('products')">
+              <i class="bi bi-box-seam-fill me-1"></i> 產品管理
+            </a>
+          </li>
+        </ul>
+
+        <!-- Action Tools & Dropdown -->
+        <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+          <button class="btn btn-sm btn-outline-light d-flex align-items-center gap-1" onclick="app.openNewModalByCurrentTab()" title="快速新增目前模組項目">
+            <i class="bi bi-plus-lg"></i>
+            <span id="quickAddBtnText">新增報價單</span>
+          </button>
+          
+          <div class="dropdown">
+            <button class="btn btn-sm btn-secondary dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-gear-fill"></i>
+              <span class="d-none d-md-inline">系統資料</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+              <li><h6 class="dropdown-header">資料操作與備份</h6></li>
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2" onclick="app.exportDataJSON()">
+                  <i class="bi bi-download text-primary"></i> 匯出系統備份 (JSON)
+                </button>
+              </li>
+              <li>
+                <label class="dropdown-item d-flex align-items-center gap-2 mb-0" style="cursor: pointer;">
+                  <i class="bi bi-upload text-success"></i> 匯入系統備份 (JSON)
+                  <input type="file" id="importJsonInput" accept=".json" style="display:none;" onchange="app.importDataJSON(event)" />
+                </label>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 text-danger" onclick="app.confirmResetMockData()">
+                  <i class="bi bi-arrow-counterclockwise"></i> 重置回預設示範資料
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Area -->
+  <main class="container-fluid px-3 px-lg-4 py-4 flex-grow-1 no-print">
+
+    <!-- 1. Quotation Module Tab (報價單管理) -->
+    <section id="tab-quotations" class="app-tab-section">
+      <!-- Summary stats cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="p-2 rounded bg-primary-subtle text-primary fs-3">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div>
+              <div class="text-secondary small fw-medium">報價單總計</div>
+              <div class="fs-4 fw-bold" id="stat-quo-total">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="p-2 rounded bg-success-subtle text-success fs-3">
+              <i class="bi bi-currency-dollar"></i>
+            </div>
+            <div>
+              <div class="text-secondary small fw-medium">報價總額 (含稅)</div>
+              <div class="fs-4 fw-bold" id="stat-quo-amount">NT$ 0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="p-2 rounded bg-info-subtle text-info fs-3">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div>
+              <div class="text-secondary small fw-medium">已成交 / 已簽約</div>
+              <div class="fs-4 fw-bold" id="stat-quo-accepted">0 筆</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="p-2 rounded bg-warning-subtle text-warning-emphasis fs-3">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div>
+              <div class="text-secondary small fw-medium">草稿與已發送</div>
+              <div class="fs-4 fw-bold" id="stat-quo-pending">0 筆</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quotation List Table Card -->
+      <div class="app-card">
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-bold text-dark">
+              <i class="bi bi-file-earmark-text text-primary me-1"></i> 報價單列表
+            </h5>
+            <span class="badge bg-light text-secondary border" id="quo-count-badge">共 0 筆</span>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="width: 260px;">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="quoSearchInput" placeholder="搜尋單號、客戶、業務員..." oninput="app.renderQuotations()" />
+            </div>
+            <select class="form-select form-select-sm" id="quoStatusFilter" style="width: 130px;" onchange="app.renderQuotations()">
+              <option value="">全部狀態</option>
+              <option value="草稿">草稿 (Draft)</option>
+              <option value="已發送">已發送 (Sent)</option>
+              <option value="已簽約">已簽約 (Signed)</option>
+              <option value="已結案">已結案 (Closed)</option>
+            </select>
+            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" onclick="app.openQuotationModal()">
+              <i class="bi bi-plus-lg"></i> 開立報價單
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="quotationTable">
+            <thead>
+              <tr>
+                <th style="width: 140px;">報價單號</th>
+                <th>客戶公司名稱</th>
+                <th style="width: 110px;">報價日期</th>
+                <th style="width: 100px;">業務人員</th>
+                <th class="text-end" style="width: 130px;">未稅合計</th>
+                <th class="text-end" style="width: 140px;">總價 (含稅)</th>
+                <th class="text-center" style="width: 100px;">狀態</th>
+                <th class="text-center" style="width: 180px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="quotationTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Client Management Tab (客戶管理) -->
+    <section id="tab-clients" class="app-tab-section d-none">
+      <div class="app-card">
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-bold text-dark">
+              <i class="bi bi-people-fill text-primary me-1"></i> 客戶名冊管理
+            </h5>
+            <span class="badge bg-light text-secondary border" id="client-count-badge">共 0 筆</span>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="width: 260px;">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="clientSearchInput" placeholder="搜尋客戶名稱、統編、窗口..." oninput="app.renderClients()" />
+            </div>
+            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" onclick="app.openClientModal()">
+              <i class="bi bi-person-plus-fill"></i> 新增客戶
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 120px;">客戶代碼</th>
+                <th>客戶公司名稱</th>
+                <th style="width: 110px;">統一編號</th>
+                <th style="width: 130px;">付款條件</th>
+                <th style="width: 130px;">聯絡窗口</th>
+                <th style="width: 140px;">電話</th>
+                <th>Email / 地址</th>
+                <th class="text-center" style="width: 160px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="clientTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Vendor Management Tab (廠商管理) -->
+    <section id="tab-vendors" class="app-tab-section d-none">
+      <div class="app-card">
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-bold text-dark">
+              <i class="bi bi-buildings-fill text-primary me-1"></i> 供應商 / 廠商名冊
+            </h5>
+            <span class="badge bg-light text-secondary border" id="vendor-count-badge">共 0 筆</span>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="width: 260px;">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="vendorSearchInput" placeholder="搜尋廠商名稱、統編、窗口..." oninput="app.renderVendors()" />
+            </div>
+            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" onclick="app.openVendorModal()">
+              <i class="bi bi-building-add"></i> 新增廠商
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 120px;">廠商代碼</th>
+                <th>廠商公司名稱</th>
+                <th style="width: 110px;">統一編號</th>
+                <th style="width: 120px;">付款條件</th>
+                <th style="width: 120px;">聯絡窗口</th>
+                <th style="width: 130px;">電話</th>
+                <th>Email / 地址</th>
+                <th class="text-center" style="width: 150px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="vendorTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Product Management Tab (產品管理) -->
+    <section id="tab-products" class="app-tab-section d-none">
+      <div class="app-card">
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0 fw-bold text-dark">
+              <i class="bi bi-box-seam-fill text-primary me-1"></i> 產品型錄與庫存
+            </h5>
+            <span class="badge bg-light text-secondary border" id="product-count-badge">共 0 筆</span>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="width: 260px;">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="productSearchInput" placeholder="搜尋產品名稱、規格、供應商..." oninput="app.renderProducts()" />
+            </div>
+            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" onclick="app.openProductModal()">
+              <i class="bi bi-plus-circle"></i> 新增產品
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 110px;">產品編號</th>
+                <th>產品名稱與規格</th>
+                <th style="width: 100px;">廠牌</th>
+                <th style="width: 130px;">供應廠商</th>
+                <th class="text-end" style="width: 100px;">成本 (NT$)</th>
+                <th class="text-end" style="width: 110px;">售價 (NT$)</th>
+                <th class="text-center" style="width: 80px;">單位</th>
+                <th class="text-center" style="width: 90px;">庫存</th>
+                <th class="text-center" style="width: 140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container position-fixed top-0 end-0 p-3 no-print" style="z-index: 1100;">
+    <div id="systemToast" class="toast align-items-center text-white border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body d-flex align-items-center gap-2" id="toastMessage">
+          <i class="bi bi-check-circle-fill fs-5"></i>
+          <span>操作成功</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Add/Edit Modal -->
+  <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark" id="clientModalLabel">新增客戶資料</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="clientForm" class="needs-validation" novalidate onsubmit="app.saveClient(event)">
+          <div class="modal-body p-4">
+            <input type="hidden" id="clientId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">客戶代碼 (自動編號)</label>
+                <input type="text" class="form-control bg-light text-mono" id="clientCode" readonly />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label small fw-bold text-dark">公司名稱 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="clientName" required placeholder="例如：台積智慧科技股份有限公司" />
+                <div class="invalid-feedback">請填寫客戶公司名稱</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-dark">統一編號 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control text-mono" id="clientTaxId" pattern="^\d{8}$" maxlength="8" required placeholder="8 碼數字" />
+                <div class="invalid-feedback">請輸入正確的 8 碼數字統一編號</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-dark">付款條件 <span class="text-danger">*</span></label>
+                <select class="form-select" id="clientPaymentTerm" required>
+                  <option value="">請選擇付款條件...</option>
+                  <option value="月結 30 天">月結 30 天</option>
+                  <option value="月結 60 天">月結 60 天</option>
+                  <option value="現金">現金</option>
+                  <option value="訂金 30% 尾款 70%">訂金 30% 尾款 70%</option>
+                </select>
+                <div class="invalid-feedback">請選擇付款條件</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-dark">電子郵件 (Email) <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="clientEmail" required placeholder="name@company.com" />
+                <div class="invalid-feedback">請輸入有效的電子信箱格式</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">聯絡窗口</label>
+                <input type="text" class="form-control" id="clientContact" placeholder="例如：林經理 / 採購部" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">聯絡電話</label>
+                <input type="text" class="form-control" id="clientPhone" placeholder="例如：02-2345-6789" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">公司地址</label>
+                <input type="text" class="form-control" id="clientAddress" placeholder="例如：台北市信義區信義路五段 7 號 50 樓" />
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">備註說明</label>
+                <textarea class="form-control" id="clientNote" rows="2" placeholder="備註或特殊要求事項..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light px-4 py-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="submit" class="btn btn-primary px-4">儲存客戶資料</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor Add/Edit Modal -->
+  <div class="modal fade" id="vendorModal" tabindex="-1" aria-labelledby="vendorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark" id="vendorModalLabel">新增廠商資料</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="vendorForm" class="needs-validation" novalidate onsubmit="app.saveVendor(event)">
+          <div class="modal-body p-4">
+            <input type="hidden" id="vendorId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">廠商代碼 (自動編號)</label>
+                <input type="text" class="form-control bg-light text-mono" id="vendorCode" readonly />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label small fw-bold text-dark">公司名稱 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="vendorName" required placeholder="例如：聯邦資訊設備有限公司" />
+                <div class="invalid-feedback">請填寫廠商公司名稱</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-dark">統一編號 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control text-mono" id="vendorTaxId" pattern="^\d{8}$" maxlength="8" required placeholder="8 碼數字" />
+                <div class="invalid-feedback">請輸入正確的 8 碼數字統一編號</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-dark">付款條件 <span class="text-danger">*</span></label>
+                <select class="form-select" id="vendorPaymentTerm" required>
+                  <option value="">請選擇付款條件...</option>
+                  <option value="貨到付款">貨到付款</option>
+                  <option value="月結 30 天">月結 30 天</option>
+                  <option value="票期 60 天">票期 60 天</option>
+                </select>
+                <div class="invalid-feedback">請選擇付款條件</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">電子郵件 (Email)</label>
+                <input type="email" class="form-control" id="vendorEmail" placeholder="vendor@example.com" />
+                <div class="invalid-feedback">請輸入有效的信箱格式</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">聯絡窗口</label>
+                <input type="text" class="form-control" id="vendorContact" placeholder="例如：王課長" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">聯絡電話</label>
+                <input type="text" class="form-control" id="vendorPhone" placeholder="例如：02-8765-4321" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">公司地址</label>
+                <input type="text" class="form-control" id="vendorAddress" placeholder="例如：新北市中和區建一路 100 號" />
+              </div>
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">備註說明</label>
+                <textarea class="form-control" id="vendorNote" rows="2" placeholder="備註廠商特色、主要供應類別等..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light px-4 py-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="submit" class="btn btn-primary px-4">儲存廠商資料</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Add/Edit Modal -->
+  <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark" id="productModalLabel">新增產品資料</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="productForm" class="needs-validation" novalidate onsubmit="app.saveProduct(event)">
+          <div class="modal-body p-4">
+            <input type="hidden" id="productId" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">產品代碼 (自動編號)</label>
+                <input type="text" class="form-control bg-light text-mono" id="productCode" readonly />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label small fw-bold text-dark">產品名稱 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="productName" required placeholder="例如：企業級 Wi-Fi 6 無線基地台" />
+                <div class="invalid-feedback">請填寫產品名稱</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">成本 (NT$) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control text-end" id="productCost" min="0" step="1" required placeholder="0" oninput="app.calcProductMargin()" />
+                </div>
+                <div class="invalid-feedback">請輸入成本 (不可小於 0)</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">售價 (NT$) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control text-end" id="productPrice" min="0" step="1" required placeholder="0" oninput="app.calcProductMargin()" />
+                </div>
+                <div class="invalid-feedback">請輸入售價 (不可小於 0)</div>
+              </div>
+
+              <div class="col-12" id="productMarginAlertBox">
+                <!-- Calculated profit and margin preview -->
+                <div class="p-2 px-3 rounded bg-light border d-flex justify-content-between align-items-center small">
+                  <span>毛利估算：<strong id="marginProfit">NT$ 0</strong></span>
+                  <span>毛利率：<strong id="marginRate">0%</strong></span>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">供應商 (廠商)</label>
+                <select class="form-select" id="productVendorSelect">
+                  <option value="">無指定供應商</option>
+                  <!-- Populated from vendors -->
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-bold text-secondary">單位</label>
+                <select class="form-select" id="productUnit">
+                  <option value="PCS">PCS</option>
+                  <option value="式">式</option>
+                  <option value="組">組</option>
+                  <option value="台">台</option>
+                  <option value="箱">箱</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-bold text-secondary">庫存數量</label>
+                <input type="number" class="form-control text-center" id="productStock" min="0" value="0" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">廠牌 (品牌)</label>
+                <input type="text" class="form-control" id="productBrand" placeholder="例如：Cisco / Dell / HP" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-secondary">規格型號</label>
+                <input type="text" class="form-control" id="productSpec" placeholder="例如：AX3000 / PoE+ 供電" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">產品說明</label>
+                <textarea class="form-control" id="productDesc" rows="2" placeholder="詳細功能說明、保固服務等..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light px-4 py-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="submit" class="btn btn-primary px-4">儲存產品資料</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quotation Create/Edit Modal -->
+  <div class="modal fade" id="quotationModal" tabindex="-1" aria-labelledby="quotationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light">
+          <div>
+            <h5 class="modal-title fw-bold text-dark" id="quotationModalLabel">開立報價單</h5>
+            <small class="text-secondary">填寫客戶抬頭與報價明細，系統將即時試算複價與 5% 營業稅</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="quotationForm" class="needs-validation" novalidate onsubmit="app.saveQuotation(event)">
+          <div class="modal-body p-4">
+            <input type="hidden" id="quoId" />
+
+            <!-- Header Information Section -->
+            <div class="app-card p-3 mb-4 bg-light-subtle">
+              <h6 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle me-1"></i> 報價單抬頭資訊</h6>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold text-secondary">報價單號 (系統自動產生)</label>
+                  <input type="text" class="form-control bg-light text-mono fw-bold" id="quoCode" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold text-dark">報價日期 <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="quoDate" required />
+                  <div class="invalid-feedback">請選擇報價日期</div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold text-dark">報價人員 <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="quoSalesPerson" required placeholder="例如：陳國華 / 業務部" />
+                  <div class="invalid-feedback">請填寫報價業務人員</div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold text-secondary">有效期限</label>
+                  <select class="form-select" id="quoValidDays">
+                    <option value="報價日起 15 天">報價日起 15 天</option>
+                    <option value="報價日起 30 天" selected>報價日起 30 天</option>
+                    <option value="報價日起 60 天">報價日起 60 天</option>
+                    <option value="即日起 7 天內有效">即日起 7 天內有效</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-dark">客戶名稱 <span class="text-danger">*</span></label>
+                  <select class="form-select" id="quoClientSelect" required onchange="app.onQuoClientChange()">
+                    <option value="">-- 請選擇客戶 --</option>
+                    <!-- Populated dynamically from Clients -->
+                  </select>
+                  <div class="invalid-feedback">請選擇客戶</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-dark">聯絡電話 <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="quoClientPhone" required placeholder="選客戶後自動帶出，可修改" />
+                  <div class="invalid-feedback">請填寫聯絡電話</div>
+                </div>
+
+                <div class="col-md-8">
+                  <label class="form-label small fw-bold text-dark">聯絡地址 <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="quoClientAddress" required placeholder="選客戶後自動帶出，可修改" />
+                  <div class="invalid-feedback">請填寫聯絡地址</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-secondary">單據狀態</label>
+                  <select class="form-select" id="quoStatus">
+                    <option value="草稿">草稿 (Draft)</option>
+                    <option value="已發送">已發送 (Sent)</option>
+                    <option value="已簽約">已簽約 (Signed)</option>
+                    <option value="已結案">已結案 (Closed)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Items Table Section -->
+            <div class="app-card p-3 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-list-check me-1"></i> 報價明細項目</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" onclick="app.addQuoItemRow()">
+                  <i class="bi bi-plus-circle"></i> 新增項目
+                </button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0" id="quoItemsTable">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center" style="width: 45px;">#</th>
+                      <th style="min-width: 220px;">產品品名 <span class="text-danger">*</span></th>
+                      <th style="min-width: 200px;">規格說明</th>
+                      <th class="text-center" style="width: 90px;">單位</th>
+                      <th class="text-end" style="width: 140px;">單價 (NT$) <span class="text-danger">*</span></th>
+                      <th class="text-center" style="width: 100px;">數量 <span class="text-danger">*</span></th>
+                      <th class="text-end" style="width: 140px;">小計 (複價)</th>
+                      <th class="text-center" style="width: 50px;">刪</th>
+                    </tr>
+                  </thead>
+                  <tbody id="quoItemsBody">
+                    <!-- Dynamic rows inserted via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Real-time calculation summary -->
+              <div class="row justify-content-end mt-3">
+                <div class="col-md-5">
+                  <div class="bg-light p-3 rounded border">
+                    <div class="d-flex justify-content-between mb-2">
+                      <span class="text-secondary">未稅合計 (Subtotal)：</span>
+                      <span class="fw-bold fs-6" id="quoSubtotalDisplay">NT$ 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                      <span class="text-secondary">營業稅 (VAT 5%)：</span>
+                      <span class="fw-bold text-secondary" id="quoTaxDisplay">NT$ 0</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-bold text-dark fs-6">總價含稅 (Total)：</span>
+                      <span class="fw-bold text-primary fs-5" id="quoTotalDisplay">NT$ 0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes & Terms -->
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label small fw-bold text-secondary">報價備註與交易條款</label>
+                <textarea class="form-control" id="quoRemarks" rows="2" placeholder="例如：1. 交貨期限：訂單確認後 7-14 個工作天；2. 付款方式：依約定條件；3. 產品提供原廠保固一年。"></textarea>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer bg-light px-4 py-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="submit" class="btn btn-primary px-4">確認儲存報價單</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 Print / Preview Modal -->
+  <div class="modal fade" id="printViewModal" tabindex="-1" aria-labelledby="printViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white no-print">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="printViewModalLabel">
+            <i class="bi bi-printer"></i> 報價單正式 A4 檢視與列印
+          </h5>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm d-flex align-items-center gap-1" onclick="window.print()">
+              <i class="bi bi-printer-fill"></i> 列印 / 另存為 PDF
+            </button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <div class="modal-body p-0" id="printArea">
+          <div class="a4-preview-container">
+            <!-- A4 Document Sheet -->
+            <div class="a4-sheet" id="a4Content">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-body p-4 text-center">
+          <div class="text-danger display-5 mb-2"><i class="bi bi-exclamation-triangle"></i></div>
+          <h6 class="fw-bold mb-2" id="deleteModalTitle">確認刪除項目？</h6>
+          <p class="text-muted small mb-4" id="deleteModalDesc">刪除後將無法還原此筆紀錄。</p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-sm btn-danger px-3" id="confirmDeleteBtn">確認刪除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Data Confirmation Modal -->
+  <div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-body p-4 text-center">
+          <div class="text-warning display-5 mb-2"><i class="bi bi-arrow-counterclockwise"></i></div>
+          <h6 class="fw-bold mb-2">確認重置為預設示範資料？</h6>
+          <p class="text-muted small mb-4">這將覆蓋現有修改過的資料，並重新注入標準示範客戶、廠商、產品及報價單。</p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-sm btn-warning px-3" onclick="app.resetMockData()">確認重置</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5.3.3 Bundle with Popper JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Vanilla JavaScript Application Logic -->
+  <script>
+    /**
+     * Modern Quotation Management System
+     * Architecture: Vanilla JS + Bootstrap 5.3 + LocalStorage
+     */
+
+    // --- 1. Initial Mock Data ---
+    const INITIAL_MOCK_DATA = {
+      clients: [
+        {
+          id: "CUST-0001",
+          name: "台積智聯系統股份有限公司",
+          taxId: "84920145",
+          email: "procure@ts-intel.com.tw",
+          paymentTerm: "月結 30 天",
+          contact: "李經理 / 採購處",
+          phone: "03-578-8888",
+          address: "新竹科學園區研發六路 12 號 3 樓",
+          note: "竹科高頻回購企業客戶，送貨需提前一天申請入廠通行"
+        },
+        {
+          id: "CUST-0002",
+          name: "富邦智慧數碼科技股份有限公司",
+          taxId: "54321987",
+          email: "tech-buyer@fubang-smart.com",
+          paymentTerm: "月結 60 天",
+          contact: "張副總 / 資訊長室",
+          phone: "02-6638-9999",
+          address: "台北市大安區敦化南路一段 108 號 16 樓",
+          note: "主要需求伺服器升級與雲端網路連線設備"
+        },
+        {
+          id: "CUST-0003",
+          name: "遠傳智慧物聯網創新中心",
+          taxId: "23584109",
+          email: "iot_admin@fet-smart.net",
+          paymentTerm: "訂金 30% 尾款 70%",
+          contact: "林專案協理",
+          phone: "02-7723-5500",
+          address: "台北市內湖區瑞光路 468 號 7 樓",
+          note: "專案合作型態，驗收合格後支付尾款"
+        },
+        {
+          id: "CUST-0004",
+          name: "宏碁雲端資訊系統整合部",
+          taxId: "12345678",
+          email: "cloud_infra@acer-sys.com",
+          paymentTerm: "現金",
+          contact: "陳主任",
+          phone: "02-2696-3131",
+          address: "新北市汐止區新台五路一段 88 號 21 樓",
+          note: "常態耗材與週邊設備快速出貨"
+        }
+      ],
+      vendors: [
+        {
+          id: "VEND-0001",
+          name: "聯強國際科技股份有限公司",
+          taxId: "22099981",
+          paymentTerm: "月結 30 天",
+          email: "sales@synnex.com.tw",
+          contact: "王協理",
+          phone: "02-2506-3320",
+          address: "台北市中山區民生東路三段 75 號",
+          note: "一線網通、伺服器代理總經銷商"
+        },
+        {
+          id: "VEND-0002",
+          name: "精誠資訊企業系統處",
+          taxId: "16744882",
+          paymentTerm: "票期 60 天",
+          email: "partner@systex.com.tw",
+          contact: "何經理",
+          phone: "02-7720-1888",
+          address: "台北市內湖區瑞光路 318 號",
+          note: "企業資訊安全與備份軟硬體設備"
+        },
+        {
+          id: "VEND-0003",
+          name: "建達國際通信配銷部",
+          taxId: "97162450",
+          paymentTerm: "貨到付款",
+          email: "support@xander.com.tw",
+          contact: "沈副理",
+          phone: "02-2218-3600",
+          address: "新北市新店區民權路 95 號 6 樓",
+          note: "網路線材、PoE Switch 及機櫃週邊"
+        },
+        {
+          id: "VEND-0004",
+          name: "敦新科技股份有限公司",
+          taxId: "70753819",
+          paymentTerm: "月結 30 天",
+          email: "order@dawningtech.com.tw",
+          contact: "徐專員",
+          phone: "02-8797-2688",
+          address: "台北市內湖區洲子街 62 號 5 樓",
+          note: "商用防火牆與高速儲存設備"
+        }
+      ],
+      products: [
+        {
+          id: "PROD-0001",
+          name: "企業級 Wi-Fi 6 AX5400 雙頻無線基地台",
+          cost: 4500,
+          price: 7800,
+          vendorId: "VEND-0001",
+          unit: "台",
+          spec: "802.11ax, 4x4 MU-MIMO, 支援 500+ 高密度連線",
+          brand: "Cisco Meraki",
+          stock: 35,
+          desc: "提供三年雲端授權與原廠硬體保固服務"
+        },
+        {
+          id: "PROD-0002",
+          name: "24 埠 L2+ Gigabit PoE+ 網管型交換器",
+          cost: 11000,
+          price: 18500,
+          vendorId: "VEND-0003",
+          unit: "台",
+          spec: "370W 供電預算, 4 埠 10G SFP+ 光纖上行",
+          brand: "Edgecore",
+          stock: 18,
+          desc: "適用高階監控攝影機及全棟無線 AP 供電部署"
+        },
+        {
+          id: "PROD-0003",
+          name: "次世代企業資安硬體防火牆 (NGFW)",
+          cost: 32000,
+          price: 49800,
+          vendorId: "VEND-0004",
+          unit: "台",
+          spec: "威脅防禦吞吐量 1.5 Gbps, 支援 200 條 SSL-VPN",
+          brand: "Fortinet",
+          stock: 8,
+          desc: "內含一年 UTM 防護特徵庫與原廠工程技術支援"
+        },
+        {
+          id: "PROD-0004",
+          name: "1U 機架式雙路伺服器主機",
+          cost: 72000,
+          price: 108000,
+          vendorId: "VEND-0001",
+          unit: "台",
+          spec: "Intel Xeon 5418Y, 64GB DDR5 ECC, 2x 960GB NVMe SSD",
+          brand: "Dell EMC",
+          stock: 5,
+          desc: "包含遠端管理晶片 iDRAC9 Enterprise，三年 24x7 服務"
+        },
+        {
+          id: "PROD-0005",
+          name: "Cat.6 零鹵素低煙無毒高速網路線 (305M)",
+          cost: 2600,
+          price: 4200,
+          vendorId: "VEND-0003",
+          unit: "箱",
+          spec: "23AWG 純無氧銅, 通過 Fluke 通道認證測試",
+          brand: "CommScope",
+          stock: 42,
+          desc: "機房標準規格，阻燃等級符合 CNS 標準"
+        },
+        {
+          id: "PROD-0006",
+          name: "資訊機房環境監測與網路建置工程服務",
+          cost: 12000,
+          price: 25000,
+          vendorId: "VEND-0002",
+          unit: "式",
+          spec: "含現場拉線、理線架配置、配線箱端接與 Fluke 測試報告",
+          brand: "自營工程",
+          stock: 99,
+          desc: "專業資深網路工程師到府施工與驗收測試"
+        }
+      ],
+      quotations: [
+        {
+          id: "QUO-20260911-001",
+          date: "2026-09-11",
+          salesPerson: "王大明 / 資深業務經理",
+          clientId: "CUST-0001",
+          clientName: "台積智聯系統股份有限公司",
+          clientPhone: "03-578-8888",
+          clientAddress: "新竹科學園區研發六路 12 號 3 樓",
+          validDays: "報價日起 30 天",
+          status: "已簽約",
+          remarks: "1. 本報價含基本運費與上架安裝。\n2. 原廠設備提供三年有限硬體保固。\n3. 付款方式：月結 30 天匯款。",
+          items: [
+            {
+              productId: "PROD-0001",
+              name: "企業級 Wi-Fi 6 AX5400 雙頻無線基地台",
+              spec: "802.11ax, 4x4 MU-MIMO, 支援 500+ 高密度連線",
+              unit: "台",
+              unitPrice: 7800,
+              qty: 4,
+              subtotal: 31200
+            },
+            {
+              productId: "PROD-0002",
+              name: "24 埠 L2+ Gigabit PoE+ 網管型交換器",
+              spec: "370W 供電預算, 4 埠 10G SFP+ 光纖上行",
+              unit: "台",
+              unitPrice: 18500,
+              qty: 1,
+              subtotal: 18500
+            },
+            {
+              productId: "PROD-0006",
+              name: "資訊機房環境監測與網路建置工程服務",
+              spec: "含現場拉線、理線架配置、配線箱端接與 Fluke 測試報告",
+              unit: "式",
+              unitPrice: 22000,
+              qty: 1,
+              subtotal: 22000
+            }
+          ],
+          subtotal: 71700,
+          tax: 3585,
+          total: 75285
+        },
+        {
+          id: "QUO-20260910-002",
+          date: "2026-09-10",
+          salesPerson: "林欣怡 / 專案業務",
+          clientId: "CUST-0002",
+          clientName: "富邦智慧數碼科技股份有限公司",
+          clientPhone: "02-6638-9999",
+          clientAddress: "台北市大安區敦化南路一段 108 號 16 樓",
+          validDays: "報價日起 15 天",
+          status: "已發送",
+          remarks: "1. 產品保固期依原廠出廠日起算。\n2. 訂購後預計 7 個工作天內出貨。",
+          items: [
+            {
+              productId: "PROD-0003",
+              name: "次世代企業資安硬體防火牆 (NGFW)",
+              spec: "威脅防禦吞吐量 1.5 Gbps, 支援 200 條 SSL-VPN",
+              unit: "台",
+              unitPrice: 48000,
+              qty: 2,
+              subtotal: 96000
+            },
+            {
+              productId: "PROD-0005",
+              name: "Cat.6 零鹵素低煙無毒高速網路線 (305M)",
+              spec: "23AWG 純無氧銅, 通過 Fluke 通道認證測試",
+              unit: "箱",
+              unitPrice: 4000,
+              qty: 3,
+              subtotal: 12000
+            }
+          ],
+          subtotal: 108000,
+          tax: 5400,
+          total: 113400
+        },
+        {
+          id: "QUO-20260908-003",
+          date: "2026-09-08",
+          salesPerson: "陳建宏 / 技術顧問",
+          clientId: "CUST-0003",
+          clientName: "遠傳智慧物聯網創新中心",
+          clientPhone: "02-7723-5500",
+          clientAddress: "台北市內湖區瑞光路 468 號 7 樓",
+          validDays: "報價日起 30 天",
+          status: "草稿",
+          remarks: "依專案合作備忘錄規格編製草案，待雙方簽署確認書。",
+          items: [
+            {
+              productId: "PROD-0004",
+              name: "1U 機架式雙路伺服器主機",
+              spec: "Intel Xeon 5418Y, 64GB DDR5 ECC, 2x 960GB NVMe SSD",
+              unit: "台",
+              unitPrice: 105000,
+              qty: 2,
+              subtotal: 210000
+            }
+          ],
+          subtotal: 210000,
+          tax: 10500,
+          total: 220500
+        }
+      ]
+    };
+
+    // --- 2. Central Application Controller ---
+    class QuotationApp {
+      constructor() {
+        this.STORAGE_KEY = 'QMS_DATABASE_V1';
+        this.currentTab = 'quotations';
+        this.deleteContext = null; // { type: 'client'|'vendor'|'product'|'quo', id: string }
+        this.initData();
+        this.initModals();
+        this.setupEventListeners();
+        this.renderAll();
+      }
+
+      // LocalStorage initialization & retrieval
+      initData() {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        if (!stored) {
+          this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
+          this.saveData();
+        } else {
+          try {
+            this.data = JSON.parse(stored);
+            if (!this.data.clients || !this.data.vendors || !this.data.products || !this.data.quotations) {
+              throw new Error("Invalid schema");
+            }
+          } catch (e) {
+            console.warn("Storage reset due to parse error:", e);
+            this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
+            this.saveData();
+          }
+        }
+      }
+
+      saveData() {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+      }
+
+      initModals() {
+        this.clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+        this.vendorModal = new bootstrap.Modal(document.getElementById('vendorModal'));
+        this.productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        this.quotationModal = new bootstrap.Modal(document.getElementById('quotationModal'));
+        this.printViewModal = new bootstrap.Modal(document.getElementById('printViewModal'));
+        this.deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        this.resetConfirmModal = new bootstrap.Modal(document.getElementById('resetConfirmModal'));
+      }
+
+      setupEventListeners() {
+        // Handle hash-based navigation
+        window.addEventListener('hashchange', () => {
+          const hash = window.location.hash.replace('#', '') || 'quotations';
+          this.navigate(hash);
+        });
+
+        // Setup delete confirm button action
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+          this.executeDelete();
+        });
+
+        // Initialize hash if present
+        if (window.location.hash) {
+          this.navigate(window.location.hash.replace('#', ''));
+        }
+      }
+
+      // --- Navigation ---
+      navigate(tabId) {
+        const validTabs = ['quotations', 'clients', 'vendors', 'products'];
+        if (!validTabs.includes(tabId)) tabId = 'quotations';
+        this.currentTab = tabId;
+
+        // Update nav links
+        validTabs.forEach(tab => {
+          const link = document.getElementById(`nav-${tab}`);
+          const section = document.getElementById(`tab-${tab}`);
+          if (tab === tabId) {
+            link.classList.add('active', 'text-white');
+            link.classList.remove('text-white-50');
+            section.classList.remove('d-none');
+          } else {
+            link.classList.remove('active', 'text-white');
+            link.classList.add('text-white-50');
+            section.classList.add('d-none');
+          }
+        });
+
+        // Update quick add button text
+        const quickAddTextMap = {
+          quotations: '新增報價單',
+          clients: '新增客戶',
+          vendors: '新增廠商',
+          products: '新增產品'
+        };
+        document.getElementById('quickAddBtnText').textContent = quickAddTextMap[tabId] || '新增項目';
+
+        // Auto close mobile navbar collapse
+        const navbarCollapse = document.getElementById('navbarContent');
+        if (navbarCollapse.classList.contains('show')) {
+          const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+          if (bsCollapse) bsCollapse.hide();
+        }
+      }
+
+      openNewModalByCurrentTab() {
+        switch (this.currentTab) {
+          case 'clients': this.openClientModal(); break;
+          case 'vendors': this.openVendorModal(); break;
+          case 'products': this.openProductModal(); break;
+          case 'quotations':
+          default:
+            this.openQuotationModal();
+            break;
+        }
+      }
+
+      // --- Toast Notification ---
+      showToast(message, type = 'success') {
+        const toastEl = document.getElementById('systemToast');
+        const toastMsgEl = document.getElementById('toastMessage');
+        const iconClass = type === 'success' ? 'bi-check-circle-fill' : type === 'danger' ? 'bi-exclamation-octagon-fill' : 'bi-info-circle-fill';
+        const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-primary';
+
+        toastEl.className = `toast align-items-center text-white border-0 shadow ${bgClass}`;
+        toastMsgEl.innerHTML = `<i class="bi ${iconClass} fs-5"></i> <span>${message}</span>`;
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+      }
+
+      // --- Number & Currency Formatting ---
+      formatCurrency(val) {
+        const num = Number(val) || 0;
+        return 'NT$ ' + num.toLocaleString('zh-TW');
+      }
+
+      // Number to Traditional Chinese Currency Text
+      numberToChineseWords(n) {
+        const fraction = ['角', '分'];
+        const digit = ['零', '壹', '貳', '參', '肆', '伍', '陸', '柒', '捌', '玖'];
+        const unit = [['元', '萬', '億'], ['', '拾', '佰', '仟']];
+        let num = Math.abs(n);
+        let s = '';
+        for (let i = 0; i < fraction.length; i++) {
+          s += (digit[Math.floor(num * 10 * Math.pow(10, i)) % 10] + fraction[i]).replace(/零./, '');
+        }
+        s = s || '整';
+        num = Math.floor(num);
+        for (let i = 0; i < unit[0].length && num > 0; i++) {
+          let p = '';
+          for (let j = 0; j < unit[1].length && num > 0; j++) {
+            p = digit[num % 10] + unit[1][j] + p;
+            num = Math.floor(num / 10);
+          }
+          s = p.replace(/(零.)*零$/, '').replace(/^$/, '零') + unit[0][i] + s;
+        }
+        return '新台幣 ' + (s.replace(/(零.)*零元/, '元').replace(/(零.)+/g, '零').replace(/^整$/, '零元整') || '零元整');
+      }
+
+      // --- Automatic Sequential ID Generators ---
+      getNextId(prefix, list) {
+        let maxNum = 0;
+        list.forEach(item => {
+          if (item.id && item.id.startsWith(prefix)) {
+            const numPart = parseInt(item.id.replace(prefix, ''), 10);
+            if (!isNaN(numPart) && numPart > maxNum) {
+              maxNum = numPart;
+            }
+          }
+        });
+        const nextNum = maxNum + 1;
+        return prefix + String(nextNum).padStart(4, '0');
+      }
+
+      getNextQuotationId() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const datePrefix = `QUO-${yyyy}${mm}${dd}-`;
+
+        let maxSeq = 0;
+        this.data.quotations.forEach(q => {
+          if (q.id && q.id.startsWith(datePrefix)) {
+            const seq = parseInt(q.id.replace(datePrefix, ''), 10);
+            if (!isNaN(seq) && seq > maxSeq) {
+              maxSeq = seq;
+            }
+          }
+        });
+        return `${datePrefix}${String(maxSeq + 1).padStart(3, '0')}`;
+      }
+
+      // --- 3. Client Module Operations ---
+      renderClients() {
+        const keyword = (document.getElementById('clientSearchInput').value || '').trim().toLowerCase();
+        const tbody = document.getElementById('clientTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = this.data.clients.filter(c => {
+          return c.name.toLowerCase().includes(keyword) ||
+                 c.taxId.includes(keyword) ||
+                 (c.contact && c.contact.toLowerCase().includes(keyword)) ||
+                 (c.phone && c.phone.includes(keyword)) ||
+                 (c.email && c.email.toLowerCase().includes(keyword));
+        });
+
+        document.getElementById('client-count-badge').textContent = `共 ${filtered.length} 筆`;
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">無符合條件的客戶資料</td></tr>`;
+          return;
+        }
+
+        filtered.forEach(client => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="badge bg-light text-dark border text-mono">${client.id}</span></td>
+            <td>
+              <div class="fw-bold text-dark">${client.name}</div>
+              ${client.note ? `<small class="text-muted d-block text-truncate" style="max-width: 280px;" title="${client.note}"><i class="bi bi-chat-left-text me-1"></i>${client.note}</small>` : ''}
+            </td>
+            <td><span class="text-mono fw-medium">${client.taxId}</span></td>
+            <td><span class="badge bg-primary-subtle text-primary">${client.paymentTerm}</span></td>
+            <td>${client.contact || '<span class="text-muted">-</span>'}</td>
+            <td><small class="text-mono">${client.phone || '-'}</small></td>
+            <td>
+              <div><a href="mailto:${client.email}" class="text-decoration-none small text-truncate d-inline-block" style="max-width: 200px;">${client.email}</a></div>
+              <div class="text-muted small text-truncate" style="max-width: 250px;" title="${client.address || ''}">${client.address || '-'}</div>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" title="為此客戶建立報價單" onclick="app.createQuotationForClient('${client.id}')">
+                  <i class="bi bi-file-earmark-plus"></i> 報價
+                </button>
+                <button class="btn btn-outline-secondary" title="編輯" onclick="app.openClientModal('${client.id}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-outline-danger" title="刪除" onclick="app.requestDelete('client', '${client.id}', '${client.name}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      openClientModal(clientId = null) {
+        const form = document.getElementById('clientForm');
+        form.classList.remove('was-validated');
+
+        if (clientId) {
+          const client = this.data.clients.find(c => c.id === clientId);
+          if (!client) return;
+          document.getElementById('clientModalLabel').textContent = '編輯客戶資料';
+          document.getElementById('clientId').value = client.id;
+          document.getElementById('clientCode').value = client.id;
+          document.getElementById('clientName').value = client.name;
+          document.getElementById('clientTaxId').value = client.taxId;
+          document.getElementById('clientPaymentTerm').value = client.paymentTerm;
+          document.getElementById('clientEmail').value = client.email;
+          document.getElementById('clientContact').value = client.contact || '';
+          document.getElementById('clientPhone').value = client.phone || '';
+          document.getElementById('clientAddress').value = client.address || '';
+          document.getElementById('clientNote').value = client.note || '';
+        } else {
+          document.getElementById('clientModalLabel').textContent = '新增客戶資料';
+          document.getElementById('clientId').value = '';
+          document.getElementById('clientCode').value = this.getNextId('CUST-', this.data.clients);
+          form.reset();
+          document.getElementById('clientCode').value = this.getNextId('CUST-', this.data.clients);
+        }
+        this.clientModal.show();
+      }
+
+      saveClient(event) {
+        event.preventDefault();
+        const form = document.getElementById('clientForm');
+        if (!form.checkValidity()) {
+          event.stopPropagation();
+          form.classList.add('was-validated');
+          return;
+        }
+
+        const id = document.getElementById('clientId').value;
+        const code = document.getElementById('clientCode').value || this.getNextId('CUST-', this.data.clients);
+        const name = document.getElementById('clientName').value.trim();
+        const taxId = document.getElementById('clientTaxId').value.trim();
+        const paymentTerm = document.getElementById('clientPaymentTerm').value;
+        const email = document.getElementById('clientEmail').value.trim();
+        const contact = document.getElementById('clientContact').value.trim();
+        const phone = document.getElementById('clientPhone').value.trim();
+        const address = document.getElementById('clientAddress').value.trim();
+        const note = document.getElementById('clientNote').value.trim();
+
+        if (id) {
+          // Update
+          const idx = this.data.clients.findIndex(c => c.id === id);
+          if (idx !== -1) {
+            this.data.clients[idx] = { id, name, taxId, paymentTerm, email, contact, phone, address, note };
+            this.showToast(`客戶「${name}」資料已更新`);
+          }
+        } else {
+          // Create
+          this.data.clients.push({ id: code, name, taxId, paymentTerm, email, contact, phone, address, note });
+          this.showToast(`客戶「${name}」已成功建立`);
+        }
+
+        this.saveData();
+        this.clientModal.hide();
+        this.renderClients();
+        this.populateClientDropdown();
+      }
+
+      // --- 4. Vendor Module Operations ---
+      renderVendors() {
+        const keyword = (document.getElementById('vendorSearchInput').value || '').trim().toLowerCase();
+        const tbody = document.getElementById('vendorTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = this.data.vendors.filter(v => {
+          return v.name.toLowerCase().includes(keyword) ||
+                 v.taxId.includes(keyword) ||
+                 (v.contact && v.contact.toLowerCase().includes(keyword)) ||
+                 (v.phone && v.phone.includes(keyword)) ||
+                 (v.email && v.email.toLowerCase().includes(keyword));
+        });
+
+        document.getElementById('vendor-count-badge').textContent = `共 ${filtered.length} 筆`;
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">無符合條件的廠商資料</td></tr>`;
+          return;
+        }
+
+        filtered.forEach(vendor => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="badge bg-light text-dark border text-mono">${vendor.id}</span></td>
+            <td>
+              <div class="fw-bold text-dark">${vendor.name}</div>
+              ${vendor.note ? `<small class="text-muted d-block text-truncate" style="max-width: 280px;" title="${vendor.note}"><i class="bi bi-info-circle me-1"></i>${vendor.note}</small>` : ''}
+            </td>
+            <td><span class="text-mono fw-medium">${vendor.taxId}</span></td>
+            <td><span class="badge bg-info-subtle text-info-emphasis">${vendor.paymentTerm}</span></td>
+            <td>${vendor.contact || '<span class="text-muted">-</span>'}</td>
+            <td><small class="text-mono">${vendor.phone || '-'}</small></td>
+            <td>
+              <div>${vendor.email ? `<a href="mailto:${vendor.email}" class="text-decoration-none small text-truncate d-inline-block" style="max-width: 180px;">${vendor.email}</a>` : '<span class="text-muted">-</span>'}</div>
+              <div class="text-muted small text-truncate" style="max-width: 220px;" title="${vendor.address || ''}">${vendor.address || '-'}</div>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" title="編輯" onclick="app.openVendorModal('${vendor.id}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-outline-danger" title="刪除" onclick="app.requestDelete('vendor', '${vendor.id}', '${vendor.name}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      openVendorModal(vendorId = null) {
+        const form = document.getElementById('vendorForm');
+        form.classList.remove('was-validated');
+
+        if (vendorId) {
+          const vendor = this.data.vendors.find(v => v.id === vendorId);
+          if (!vendor) return;
+          document.getElementById('vendorModalLabel').textContent = '編輯廠商資料';
+          document.getElementById('vendorId').value = vendor.id;
+          document.getElementById('vendorCode').value = vendor.id;
+          document.getElementById('vendorName').value = vendor.name;
+          document.getElementById('vendorTaxId').value = vendor.taxId;
+          document.getElementById('vendorPaymentTerm').value = vendor.paymentTerm;
+          document.getElementById('vendorEmail').value = vendor.email || '';
+          document.getElementById('vendorContact').value = vendor.contact || '';
+          document.getElementById('vendorPhone').value = vendor.phone || '';
+          document.getElementById('vendorAddress').value = vendor.address || '';
+          document.getElementById('vendorNote').value = vendor.note || '';
+        } else {
+          document.getElementById('vendorModalLabel').textContent = '新增廠商資料';
+          document.getElementById('vendorId').value = '';
+          form.reset();
+          document.getElementById('vendorCode').value = this.getNextId('VEND-', this.data.vendors);
+        }
+        this.vendorModal.show();
+      }
+
+      saveVendor(event) {
+        event.preventDefault();
+        const form = document.getElementById('vendorForm');
+        if (!form.checkValidity()) {
+          event.stopPropagation();
+          form.classList.add('was-validated');
+          return;
+        }
+
+        const id = document.getElementById('vendorId').value;
+        const code = document.getElementById('vendorCode').value || this.getNextId('VEND-', this.data.vendors);
+        const name = document.getElementById('vendorName').value.trim();
+        const taxId = document.getElementById('vendorTaxId').value.trim();
+        const paymentTerm = document.getElementById('vendorPaymentTerm').value;
+        const email = document.getElementById('vendorEmail').value.trim();
+        const contact = document.getElementById('vendorContact').value.trim();
+        const phone = document.getElementById('vendorPhone').value.trim();
+        const address = document.getElementById('vendorAddress').value.trim();
+        const note = document.getElementById('vendorNote').value.trim();
+
+        if (id) {
+          const idx = this.data.vendors.findIndex(v => v.id === id);
+          if (idx !== -1) {
+            this.data.vendors[idx] = { id, name, taxId, paymentTerm, email, contact, phone, address, note };
+            this.showToast(`廠商「${name}」資料已更新`);
+          }
+        } else {
+          this.data.vendors.push({ id: code, name, taxId, paymentTerm, email, contact, phone, address, note });
+          this.showToast(`廠商「${name}」已成功新增`);
+        }
+
+        this.saveData();
+        this.vendorModal.hide();
+        this.renderVendors();
+        this.populateVendorDropdown();
+      }
+
+      // --- 5. Product Module Operations ---
+      renderProducts() {
+        const keyword = (document.getElementById('productSearchInput').value || '').trim().toLowerCase();
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = this.data.products.filter(p => {
+          const vendorObj = this.data.vendors.find(v => v.id === p.vendorId);
+          const vendorName = vendorObj ? vendorObj.name.toLowerCase() : '';
+          return p.name.toLowerCase().includes(keyword) ||
+                 (p.spec && p.spec.toLowerCase().includes(keyword)) ||
+                 (p.brand && p.brand.toLowerCase().includes(keyword)) ||
+                 vendorName.includes(keyword) ||
+                 p.id.toLowerCase().includes(keyword);
+        });
+
+        document.getElementById('product-count-badge').textContent = `共 ${filtered.length} 筆`;
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">無符合條件的產品資料</td></tr>`;
+          return;
+        }
+
+        filtered.forEach(product => {
+          const vendorObj = this.data.vendors.find(v => v.id === product.vendorId);
+          const profit = (product.price || 0) - (product.cost || 0);
+          const margin = product.price > 0 ? Math.round((profit / product.price) * 100) : 0;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="badge bg-light text-dark border text-mono">${product.id}</span></td>
+            <td>
+              <div class="fw-bold text-dark">${product.name}</div>
+              ${product.spec ? `<div class="text-secondary small text-truncate" style="max-width: 280px;" title="${product.spec}">${product.spec}</div>` : ''}
+            </td>
+            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${product.brand || '-'}</span></td>
+            <td><small class="text-dark">${vendorObj ? vendorObj.name : '<span class="text-muted">未指定</span>'}</small></td>
+            <td class="text-end text-muted text-mono">${this.formatCurrency(product.cost)}</td>
+            <td class="text-end fw-bold text-dark text-mono">
+              ${this.formatCurrency(product.price)}
+              <div class="small text-success" style="font-size: 0.72rem;">利潤 ${margin}%</div>
+            </td>
+            <td class="text-center"><span class="badge bg-light text-secondary border">${product.unit}</span></td>
+            <td class="text-center">
+              <span class="badge ${product.stock > 10 ? 'bg-success-subtle text-success' : product.stock > 0 ? 'bg-warning-subtle text-warning-emphasis' : 'bg-danger-subtle text-danger'}">
+                ${product.stock || 0}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" title="編輯" onclick="app.openProductModal('${product.id}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-outline-danger" title="刪除" onclick="app.requestDelete('product', '${product.id}', '${product.name}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      calcProductMargin() {
+        const cost = parseFloat(document.getElementById('productCost').value) || 0;
+        const price = parseFloat(document.getElementById('productPrice').value) || 0;
+        const profit = price - cost;
+        const rate = price > 0 ? Math.round((profit / price) * 100) : 0;
+
+        document.getElementById('marginProfit').textContent = this.formatCurrency(profit);
+        document.getElementById('marginRate').textContent = `${rate}%`;
+        document.getElementById('marginProfit').className = profit >= 0 ? 'text-success' : 'text-danger';
+        document.getElementById('marginRate').className = rate >= 0 ? 'text-success' : 'text-danger';
+      }
+
+      openProductModal(productId = null) {
+        this.populateVendorDropdown();
+        const form = document.getElementById('productForm');
+        form.classList.remove('was-validated');
+
+        if (productId) {
+          const product = this.data.products.find(p => p.id === productId);
+          if (!product) return;
+          document.getElementById('productModalLabel').textContent = '編輯產品資料';
+          document.getElementById('productId').value = product.id;
+          document.getElementById('productCode').value = product.id;
+          document.getElementById('productName').value = product.name;
+          document.getElementById('productCost').value = product.cost;
+          document.getElementById('productPrice').value = product.price;
+          document.getElementById('productVendorSelect').value = product.vendorId || '';
+          document.getElementById('productUnit').value = product.unit || 'PCS';
+          document.getElementById('productStock').value = product.stock ?? 0;
+          document.getElementById('productBrand').value = product.brand || '';
+          document.getElementById('productSpec').value = product.spec || '';
+          document.getElementById('productDesc').value = product.desc || '';
+        } else {
+          document.getElementById('productModalLabel').textContent = '新增產品資料';
+          document.getElementById('productId').value = '';
+          form.reset();
+          document.getElementById('productUnit').value = 'PCS';
+          document.getElementById('productStock').value = 0;
+          document.getElementById('productCode').value = this.getNextId('PROD-', this.data.products);
+        }
+        this.calcProductMargin();
+        this.productModal.show();
+      }
+
+      saveProduct(event) {
+        event.preventDefault();
+        const form = document.getElementById('productForm');
+        if (!form.checkValidity()) {
+          event.stopPropagation();
+          form.classList.add('was-validated');
+          return;
+        }
+
+        const id = document.getElementById('productId').value;
+        const code = document.getElementById('productCode').value || this.getNextId('PROD-', this.data.products);
+        const name = document.getElementById('productName').value.trim();
+        const cost = parseFloat(document.getElementById('productCost').value) || 0;
+        const price = parseFloat(document.getElementById('productPrice').value) || 0;
+        const vendorId = document.getElementById('productVendorSelect').value;
+        const unit = document.getElementById('productUnit').value;
+        const stock = parseInt(document.getElementById('productStock').value, 10) || 0;
+        const brand = document.getElementById('productBrand').value.trim();
+        const spec = document.getElementById('productSpec').value.trim();
+        const desc = document.getElementById('productDesc').value.trim();
+
+        if (id) {
+          const idx = this.data.products.findIndex(p => p.id === id);
+          if (idx !== -1) {
+            this.data.products[idx] = { id, name, cost, price, vendorId, unit, stock, brand, spec, desc };
+            this.showToast(`產品「${name}」已更新`);
+          }
+        } else {
+          this.data.products.push({ id: code, name, cost, price, vendorId, unit, stock, brand, spec, desc });
+          this.showToast(`產品「${name}」已成功新增`);
+        }
+
+        this.saveData();
+        this.productModal.hide();
+        this.renderProducts();
+      }
+
+      // --- 6. Quotation Module Operations ---
+      renderQuotations() {
+        const keyword = (document.getElementById('quoSearchInput').value || '').trim().toLowerCase();
+        const statusFilter = document.getElementById('quoStatusFilter').value;
+        const tbody = document.getElementById('quotationTableBody');
+        tbody.innerHTML = '';
+
+        const filtered = this.data.quotations.filter(q => {
+          const matchKeyword = q.id.toLowerCase().includes(keyword) ||
+                               q.clientName.toLowerCase().includes(keyword) ||
+                               q.salesPerson.toLowerCase().includes(keyword);
+          const matchStatus = !statusFilter || q.status === statusFilter;
+          return matchKeyword && matchStatus;
+        });
+
+        document.getElementById('quo-count-badge').textContent = `共 ${filtered.length} 筆`;
+
+        // Update top statistical indicators
+        let totalAmount = 0;
+        let acceptedCount = 0;
+        let pendingCount = 0;
+        this.data.quotations.forEach(q => {
+          totalAmount += (q.total || 0);
+          if (q.status === '已簽約' || q.status === '已結案') {
+            acceptedCount++;
+          } else {
+            pendingCount++;
+          }
+        });
+        document.getElementById('stat-quo-total').textContent = this.data.quotations.length;
+        document.getElementById('stat-quo-amount').textContent = this.formatCurrency(totalAmount);
+        document.getElementById('stat-quo-accepted').textContent = `${acceptedCount} 筆`;
+        document.getElementById('stat-quo-pending').textContent = `${pendingCount} 筆`;
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">無符合條件的報價單資料</td></tr>`;
+          return;
+        }
+
+        const statusBadgeMap = {
+          '草稿': 'bg-secondary text-white',
+          '已發送': 'bg-primary text-white',
+          '已簽約': 'bg-success text-white',
+          '已結案': 'bg-dark text-white'
+        };
+
+        filtered.forEach(quo => {
+          const tr = document.createElement('tr');
+          const badgeClass = statusBadgeMap[quo.status] || 'bg-secondary text-white';
+
+          tr.innerHTML = `
+            <td>
+              <span class="fw-bold text-mono text-primary">${quo.id}</span>
+            </td>
+            <td>
+              <div class="fw-bold text-dark">${quo.clientName}</div>
+              <small class="text-muted"><i class="bi bi-telephone me-1"></i>${quo.clientPhone}</small>
+            </td>
+            <td><small class="text-mono">${quo.date}</small></td>
+            <td><small>${quo.salesPerson}</small></td>
+            <td class="text-end text-muted text-mono">${this.formatCurrency(quo.subtotal)}</td>
+            <td class="text-end fw-bold text-dark text-mono">${this.formatCurrency(quo.total)}</td>
+            <td class="text-center">
+              <span class="badge ${badgeClass} stat-badge">${quo.status}</span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-primary" title="檢視 / 列印 A4 報價單" onclick="app.viewQuotationPrint('${quo.id}')">
+                  <i class="bi bi-printer"></i> 檢視
+                </button>
+                <button class="btn btn-outline-secondary" title="編輯報價單" onclick="app.openQuotationModal('${quo.id}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-outline-danger" title="刪除報價單" onclick="app.requestDelete('quo', '${quo.id}', '${quo.id} (${quo.clientName})')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      openQuotationModal(quoId = null) {
+        this.populateClientDropdown();
+        const form = document.getElementById('quotationForm');
+        form.classList.remove('was-validated');
+        const itemsBody = document.getElementById('quoItemsBody');
+        itemsBody.innerHTML = '';
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if (quoId) {
+          const quo = this.data.quotations.find(q => q.id === quoId);
+          if (!quo) return;
+          document.getElementById('quotationModalLabel').textContent = '編輯報價單';
+          document.getElementById('quoId').value = quo.id;
+          document.getElementById('quoCode').value = quo.id;
+          document.getElementById('quoDate').value = quo.date;
+          document.getElementById('quoSalesPerson').value = quo.salesPerson;
+          document.getElementById('quoValidDays').value = quo.validDays || '報價日起 30 天';
+          document.getElementById('quoClientSelect').value = quo.clientId || '';
+          document.getElementById('quoClientPhone').value = quo.clientPhone || '';
+          document.getElementById('quoClientAddress').value = quo.clientAddress || '';
+          document.getElementById('quoStatus').value = quo.status || '草稿';
+          document.getElementById('quoRemarks').value = quo.remarks || '';
+
+          if (quo.items && quo.items.length > 0) {
+            quo.items.forEach(item => {
+              this.addQuoItemRow(item);
+            });
+          } else {
+            this.addQuoItemRow();
+          }
+        } else {
+          document.getElementById('quotationModalLabel').textContent = '開立報價單';
+          document.getElementById('quoId').value = '';
+          form.reset();
+          document.getElementById('quoCode').value = this.getNextQuotationId();
+          document.getElementById('quoDate').value = todayStr;
+          document.getElementById('quoSalesPerson').value = '陳大為 / 業務主任';
+          document.getElementById('quoValidDays').value = '報價日起 30 天';
+          document.getElementById('quoStatus').value = '草稿';
+          document.getElementById('quoRemarks').value = '1. 交貨期限：訂單確認後 7-14 個工作天。\n2. 保固服務：全硬體設備享原廠保固一年。\n3. 付款條件：依客戶合約付款條款辦理。';
+
+          // Add 1 default empty item row
+          this.addQuoItemRow();
+        }
+
+        this.calcQuotationTotals();
+        this.quotationModal.show();
+      }
+
+      createQuotationForClient(clientId) {
+        this.navigate('quotations');
+        this.openQuotationModal();
+        document.getElementById('quoClientSelect').value = clientId;
+        this.onQuoClientChange();
+      }
+
+      onQuoClientChange() {
+        const clientId = document.getElementById('quoClientSelect').value;
+        const client = this.data.clients.find(c => c.id === clientId);
+        if (client) {
+          document.getElementById('quoClientPhone').value = client.phone || '';
+          document.getElementById('quoClientAddress').value = client.address || '';
+        }
+      }
+
+      // Add a dynamic item row to quotation
+      addQuoItemRow(initialItem = null) {
+        const tbody = document.getElementById('quoItemsBody');
+        const rowIndex = tbody.children.length + 1;
+        const tr = document.createElement('tr');
+        tr.className = 'quo-item-row';
+
+        // Build product dropdown options
+        let productOptions = '<option value="">-- 請選擇產品或自訂 --</option>';
+        this.data.products.forEach(p => {
+          const selected = initialItem && initialItem.productId === p.id ? 'selected' : '';
+          productOptions += `<option value="${p.id}" ${selected}>${p.name} (定價 ${p.price})</option>`;
+        });
+
+        tr.innerHTML = `
+          <td class="text-center item-row-index text-muted small fw-bold">${rowIndex}</td>
+          <td>
+            <select class="form-select form-select-sm item-product-select mb-1" onchange="app.onQuoProductSelect(this)">
+              ${productOptions}
+            </select>
+            <input type="text" class="form-control form-control-sm item-name-input" required placeholder="品名說明" value="${initialItem ? initialItem.name : ''}" />
+            <div class="invalid-feedback">請輸入品名</div>
+          </td>
+          <td>
+            <textarea class="form-control form-control-sm item-spec-input" rows="2" placeholder="規格與型號">${initialItem ? (initialItem.spec || '') : ''}</textarea>
+          </td>
+          <td class="text-center">
+            <input type="text" class="form-control form-control-sm text-center item-unit-input" value="${initialItem ? initialItem.unit : 'PCS'}" placeholder="單位" />
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm text-end item-price-input text-mono" min="0" step="1" required value="${initialItem ? initialItem.unitPrice : 0}" oninput="app.calcRowSubtotal(this)" />
+            <div class="invalid-feedback">單價不得為空</div>
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm text-center item-qty-input text-mono" min="1" step="1" required value="${initialItem ? initialItem.qty : 1}" oninput="app.calcRowSubtotal(this)" />
+            <div class="invalid-feedback">數量 >= 1</div>
+          </td>
+          <td class="text-end">
+            <span class="fw-bold text-mono text-dark item-subtotal-display">
+              ${this.formatCurrency(initialItem ? initialItem.subtotal : 0)}
+            </span>
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn btn-outline-danger btn-sm p-1" title="刪除此列" onclick="app.removeQuoItemRow(this)">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+        this.refreshRowIndices();
+        this.calcQuotationTotals();
+      }
+
+      removeQuoItemRow(btn) {
+        const tbody = document.getElementById('quoItemsBody');
+        if (tbody.children.length <= 1) {
+          this.showToast("報價單至少需保留一筆項目", "danger");
+          return;
+        }
+        btn.closest('tr').remove();
+        this.refreshRowIndices();
+        this.calcQuotationTotals();
+      }
+
+      refreshRowIndices() {
+        const rows = document.querySelectorAll('#quoItemsBody tr');
+        rows.forEach((row, idx) => {
+          const indexCell = row.querySelector('.item-row-index');
+          if (indexCell) indexCell.textContent = idx + 1;
+        });
+      }
+
+      onQuoProductSelect(selectEl) {
+        const productId = selectEl.value;
+        const row = selectEl.closest('tr');
+        if (!row) return;
+
+        const nameInput = row.querySelector('.item-name-input');
+        const specInput = row.querySelector('.item-spec-input');
+        const unitInput = row.querySelector('.item-unit-input');
+        const priceInput = row.querySelector('.item-price-input');
+
+        if (productId) {
+          const prod = this.data.products.find(p => p.id === productId);
+          if (prod) {
+            nameInput.value = prod.name;
+            specInput.value = prod.spec || prod.desc || '';
+            unitInput.value = prod.unit || 'PCS';
+            priceInput.value = prod.price || 0;
+          }
+        }
+        this.calcRowSubtotal(priceInput);
+      }
+
+      calcRowSubtotal(inputEl) {
+        const row = inputEl.closest('tr');
+        if (!row) return;
+
+        const price = parseFloat(row.querySelector('.item-price-input').value) || 0;
+        const qty = parseFloat(row.querySelector('.item-qty-input').value) || 0;
+        const subtotal = Math.round(price * qty);
+
+        row.querySelector('.item-subtotal-display').textContent = this.formatCurrency(subtotal);
+        this.calcQuotationTotals();
+      }
+
+      calcQuotationTotals() {
+        const rows = document.querySelectorAll('#quoItemsBody tr');
+        let subtotal = 0;
+
+        rows.forEach(row => {
+          const price = parseFloat(row.querySelector('.item-price-input').value) || 0;
+          const qty = parseFloat(row.querySelector('.item-qty-input').value) || 0;
+          subtotal += Math.round(price * qty);
+        });
+
+        const tax = Math.round(subtotal * 0.05);
+        const total = subtotal + tax;
+
+        document.getElementById('quoSubtotalDisplay').textContent = this.formatCurrency(subtotal);
+        document.getElementById('quoTaxDisplay').textContent = this.formatCurrency(tax);
+        document.getElementById('quoTotalDisplay').textContent = this.formatCurrency(total);
+
+        return { subtotal, tax, total };
+      }
+
+      saveQuotation(event) {
+        event.preventDefault();
+        const form = document.getElementById('quotationForm');
+        if (!form.checkValidity()) {
+          event.stopPropagation();
+          form.classList.add('was-validated');
+          return;
+        }
+
+        const id = document.getElementById('quoId').value;
+        const code = document.getElementById('quoCode').value || this.getNextQuotationId();
+        const date = document.getElementById('quoDate').value;
+        const salesPerson = document.getElementById('quoSalesPerson').value.trim();
+        const validDays = document.getElementById('quoValidDays').value;
+        const clientId = document.getElementById('quoClientSelect').value;
+        const clientObj = this.data.clients.find(c => c.id === clientId);
+        const clientName = clientObj ? clientObj.name : '未知客戶';
+        const clientPhone = document.getElementById('quoClientPhone').value.trim();
+        const clientAddress = document.getElementById('quoClientAddress').value.trim();
+        const status = document.getElementById('quoStatus').value;
+        const remarks = document.getElementById('quoRemarks').value.trim();
+
+        // Collect Items
+        const rows = document.querySelectorAll('#quoItemsBody tr');
+        const items = [];
+        let subtotalCalc = 0;
+
+        rows.forEach(row => {
+          const selectEl = row.querySelector('.item-product-select');
+          const productId = selectEl ? selectEl.value : '';
+          const name = row.querySelector('.item-name-input').value.trim();
+          const spec = row.querySelector('.item-spec-input').value.trim();
+          const unit = row.querySelector('.item-unit-input').value.trim() || 'PCS';
+          const unitPrice = parseFloat(row.querySelector('.item-price-input').value) || 0;
+          const qty = parseFloat(row.querySelector('.item-qty-input').value) || 1;
+          const subtotal = Math.round(unitPrice * qty);
+          subtotalCalc += subtotal;
+
+          items.push({ productId, name, spec, unit, unitPrice, qty, subtotal });
+        });
+
+        if (items.length === 0) {
+          this.showToast("請至少新增一項報價明細", "danger");
+          return;
+        }
+
+        const tax = Math.round(subtotalCalc * 0.05);
+        const total = subtotalCalc + tax;
+
+        const newQuoObj = {
+          id: id || code,
+          date,
+          salesPerson,
+          clientId,
+          clientName,
+          clientPhone,
+          clientAddress,
+          validDays,
+          status,
+          remarks,
+          items,
+          subtotal: subtotalCalc,
+          tax,
+          total
+        };
+
+        if (id) {
+          const idx = this.data.quotations.findIndex(q => q.id === id);
+          if (idx !== -1) {
+            this.data.quotations[idx] = newQuoObj;
+            this.showToast(`報價單「${code}」已成功更新`);
+          }
+        } else {
+          this.data.quotations.unshift(newQuoObj);
+          this.showToast(`報價單「${code}」已開立完成`);
+        }
+
+        this.saveData();
+        this.quotationModal.hide();
+        this.renderQuotations();
+      }
+
+      // --- 7. Print & A4 View Module ---
+      viewQuotationPrint(quoId) {
+        const quo = this.data.quotations.find(q => q.id === quoId);
+        if (!quo) return;
+
+        const client = this.data.clients.find(c => c.id === quo.clientId) || { taxId: '無統編', contact: '窗口未填' };
+        const container = document.getElementById('a4Content');
+
+        let rowsHtml = '';
+        quo.items.forEach((item, idx) => {
+          rowsHtml += `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 8px; text-align: center; vertical-align: top; font-size: 13px;">${idx + 1}</td>
+              <td style="padding: 8px; vertical-align: top;">
+                <div style="font-weight: 600; font-size: 14px; color: #0f172a;">${item.name}</div>
+                ${item.spec ? `<div style="font-size: 12px; color: #475569; margin-top: 2px;">${item.spec.replace(/\n/g, '<br>')}</div>` : ''}
+              </td>
+              <td style="padding: 8px; text-align: center; vertical-align: top; font-size: 13px;">${item.qty}</td>
+              <td style="padding: 8px; text-align: center; vertical-align: top; font-size: 13px;">${item.unit || 'PCS'}</td>
+              <td style="padding: 8px; text-align: right; vertical-align: top; font-size: 13px; font-family: monospace;">${item.unitPrice.toLocaleString('zh-TW')}</td>
+              <td style="padding: 8px; text-align: right; vertical-align: top; font-size: 13px; font-family: monospace; font-weight: 600;">${item.subtotal.toLocaleString('zh-TW')}</td>
+            </tr>
+          `;
+        });
+
+        const chineseTotal = this.numberToChineseWords(quo.total);
+
+        container.innerHTML = `
+          <!-- Header Area -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1e3a8a; padding-bottom: 16px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 14px; align-items: center;">
+              <div class="print-logo-box">
+                <i class="bi bi-buildings"></i>
+              </div>
+              <div>
+                <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #1e3a8a; letter-spacing: -0.5px;">極光智慧整合商務股份有限公司</h2>
+                <div style="font-size: 12px; color: #64748b; margin-top: 3px;">AURORA SMART SYSTEM INTEGRATION CORP.</div>
+                <div style="font-size: 12px; color: #334155; margin-top: 4px;">
+                  統一編號：52984166 ｜ 電話：(02) 2799-8800 ｜ 傳真：(02) 2799-8811<br>
+                  地址：114 台北市內湖區瑞光路 588 號 10 樓 ｜ 網址：https://www.aurora-smart.com.tw
+                </div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: 2px;">報 價 單</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600; letter-spacing: 1px;">QUOTATION</div>
+              <div style="margin-top: 8px; font-family: monospace; font-weight: bold; font-size: 14px; color: #1e3a8a;">
+                單號：${quo.id}
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Boxes: Client & Quotation Meta -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; font-size: 13px;">
+              <div style="font-weight: 700; color: #1e3a8a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">
+                <i class="bi bi-person-badge"></i> 客戶抬頭資訊
+              </div>
+              <div style="display: grid; grid-template-columns: 80px 1fr; row-gap: 5px;">
+                <span style="color: #64748b;">客戶名稱：</span>
+                <span style="font-weight: 600; color: #0f172a;">${quo.clientName}</span>
+                <span style="color: #64748b;">統一編號：</span>
+                <span style="font-family: monospace;">${client.taxId || '---'}</span>
+                <span style="color: #64748b;">聯絡窗口：</span>
+                <span>${client.contact || '採購代表'}</span>
+                <span style="color: #64748b;">聯絡電話：</span>
+                <span>${quo.clientPhone || '---'}</span>
+                <span style="color: #64748b;">通訊地址：</span>
+                <span>${quo.clientAddress || '---'}</span>
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; font-size: 13px;">
+              <div style="font-weight: 700; color: #1e3a8a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">
+                <i class="bi bi-file-text"></i> 單據詳細資訊
+              </div>
+              <div style="display: grid; grid-template-columns: 80px 1fr; row-gap: 5px;">
+                <span style="color: #64748b;">報價日期：</span>
+                <span style="font-family: monospace;">${quo.date}</span>
+                <span style="color: #64748b;">有效期限：</span>
+                <span style="color: #d97706; font-weight: 600;">${quo.validDays}</span>
+                <span style="color: #64748b;">業務代表：</span>
+                <span style="font-weight: 600;">${quo.salesPerson}</span>
+                <span style="color: #64748b;">付款條件：</span>
+                <span>${client.paymentTerm || '月結 30 天'}</span>
+                <span style="color: #64748b;">目前狀態：</span>
+                <span style="font-weight: 600;">${quo.status}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <thead>
+              <tr style="background: #1e3a8a; color: #ffffff;">
+                <th style="padding: 8px; font-size: 12px; width: 40px; text-align: center;">項次</th>
+                <th style="padding: 8px; font-size: 12px; text-align: left;">品名與規格說明</th>
+                <th style="padding: 8px; font-size: 12px; width: 60px; text-align: center;">數量</th>
+                <th style="padding: 8px; font-size: 12px; width: 50px; text-align: center;">單位</th>
+                <th style="padding: 8px; font-size: 12px; width: 110px; text-align: right;">單價 (NT$)</th>
+                <th style="padding: 8px; font-size: 12px; width: 120px; text-align: right;">小計金額 (NT$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <!-- Totals and Chinese Amount Section -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 20px;">
+            <div style="flex-grow: 1; background: #f1f5f9; padding: 10px 14px; border-radius: 6px; border: 1px dashed #cbd5e1; font-size: 13px;">
+              <div style="color: #475569; font-weight: 600;">總計中文大寫金額：</div>
+              <div style="font-size: 15px; font-weight: 700; color: #1e3a8a; margin-top: 3px;">
+                ${chineseTotal}
+              </div>
+            </div>
+            
+            <div style="width: 280px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; color: #475569;">
+                <span>未稅合計 (Subtotal)：</span>
+                <span style="font-family: monospace; font-weight: 600;">NT$ ${quo.subtotal.toLocaleString('zh-TW')}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; color: #475569;">
+                <span>營業稅 (5% VAT)：</span>
+                <span style="font-family: monospace; font-weight: 600;">NT$ ${quo.tax.toLocaleString('zh-TW')}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; margin-top: 4px; border-top: 2px solid #1e3a8a; color: #0f172a; font-size: 16px;">
+                <span style="font-weight: 700;">總計含稅 (Total)：</span>
+                <span style="font-family: monospace; font-weight: 800; color: #1e3a8a;">NT$ ${quo.total.toLocaleString('zh-TW')}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes & Terms -->
+          <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 25px; font-size: 12px; color: #475569;">
+            <div style="font-weight: bold; color: #1e3a8a; margin-bottom: 4px;">備註與交易條款：</div>
+            <div style="white-space: pre-line; line-height: 1.5;">${quo.remarks || '1. 本報價單所有金額均以新台幣計價。\n2. 訂購確認請回傳本單並加蓋公司發票章或負責人簽章。'}</div>
+          </div>
+
+          <!-- Signatures Section -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+            <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; min-height: 95px; position: relative;">
+              <div style="font-size: 12px; font-weight: 700; color: #1e3a8a;">報價單位：極光智慧整合商務 (股) 公司</div>
+              <div style="position: absolute; bottom: 8px; left: 12px; font-size: 11px; color: #64748b;">經辦簽章：____________________ 日期：____/____/____</div>
+            </div>
+            <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; min-height: 95px; position: relative;">
+              <div style="font-size: 12px; font-weight: 700; color: #1e3a8a;">客戶確認簽章 (請加蓋公司章及發票章)：</div>
+              <div style="position: absolute; bottom: 8px; left: 12px; font-size: 11px; color: #64748b;">客戶簽署：____________________ 日期：____/____/____</div>
+            </div>
+          </div>
+        `;
+
+        this.printViewModal.show();
+      }
+
+      // --- 8. Deletion Confirmation Flow ---
+      requestDelete(type, id, displayName) {
+        this.deleteContext = { type, id };
+        const typeNameMap = {
+          client: '客戶',
+          vendor: '廠商',
+          product: '產品',
+          quo: '報價單'
+        };
+        document.getElementById('deleteModalTitle').textContent = `確認刪除${typeNameMap[type]}？`;
+        document.getElementById('deleteModalDesc').textContent = `您即將刪除「${displayName}」，刪除後將無法還原此紀錄。`;
+        this.deleteConfirmModal.show();
+      }
+
+      executeDelete() {
+        if (!this.deleteContext) return;
+        const { type, id } = this.deleteContext;
+
+        if (type === 'client') {
+          this.data.clients = this.data.clients.filter(c => c.id !== id);
+          this.showToast('客戶資料已刪除');
+          this.renderClients();
+          this.populateClientDropdown();
+        } else if (type === 'vendor') {
+          this.data.vendors = this.data.vendors.filter(v => v.id !== id);
+          this.showToast('廠商資料已刪除');
+          this.renderVendors();
+          this.populateVendorDropdown();
+        } else if (type === 'product') {
+          this.data.products = this.data.products.filter(p => p.id !== id);
+          this.showToast('產品資料已刪除');
+          this.renderProducts();
+        } else if (type === 'quo') {
+          this.data.quotations = this.data.quotations.filter(q => q.id !== id);
+          this.showToast('報價單已成功刪除');
+          this.renderQuotations();
+        }
+
+        this.saveData();
+        this.deleteConfirmModal.hide();
+        this.deleteContext = null;
+      }
+
+      // --- 9. Dropdown Select Helpers ---
+      populateClientDropdown() {
+        const clientSelect = document.getElementById('quoClientSelect');
+        const currentVal = clientSelect.value;
+        clientSelect.innerHTML = '<option value="">-- 請選擇客戶 --</option>';
+        this.data.clients.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.name} (${c.taxId})`;
+          clientSelect.appendChild(opt);
+        });
+        if (currentVal) clientSelect.value = currentVal;
+      }
+
+      populateVendorDropdown() {
+        const vendorSelect = document.getElementById('productVendorSelect');
+        const currentVal = vendorSelect.value;
+        vendorSelect.innerHTML = '<option value="">無指定供應商</option>';
+        this.data.vendors.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = `${v.name} (${v.paymentTerm})`;
+          vendorSelect.appendChild(opt);
+        });
+        if (currentVal) vendorSelect.value = currentVal;
+      }
+
+      // --- 10. Data Backup & Reset Helpers ---
+      confirmResetMockData() {
+        this.resetConfirmModal.show();
+      }
+
+      resetMockData() {
+        this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
+        this.saveData();
+        this.resetConfirmModal.hide();
+        this.renderAll();
+        this.showToast('已重置回系統預設示範資料');
+      }
+
+      exportDataJSON() {
+        const jsonStr = JSON.stringify(this.data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `QMS_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.showToast('系統備份 JSON 已下載');
+      }
+
+      importDataJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed.clients || !parsed.vendors || !parsed.products || !parsed.quotations) {
+              throw new Error("備份檔案格式不正確");
+            }
+            this.data = parsed;
+            this.saveData();
+            this.renderAll();
+            this.showToast('系統備份已成功匯入還原！');
+          } catch (err) {
+            this.showToast(`匯入失敗：${err.message}`, 'danger');
+          }
+          event.target.value = '';
+        };
+        reader.readAsText(file);
+      }
+
+      renderAll() {
+        this.renderQuotations();
+        this.renderClients();
+        this.renderVendors();
+        this.renderProducts();
+        this.populateClientDropdown();
+        this.populateVendorDropdown();
+      }
+    }
+
+    // Initialize application on DOM ready
+    let app;
+    document.addEventListener('DOMContentLoaded', () => {
+      app = new QuotationApp();
+      window.app = app; // Expose globally for inline onclick handlers
+    });
+  </script>
+</body>
+</html>
